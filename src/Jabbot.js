@@ -95,8 +95,8 @@ export default class Jabbot extends Slackbots {
       .then((ticket) => {
         const {name} = this.findChannelById(channel);        
         const params = {
-          icon_url: 'http://imgur.com/UeMdM9p.png',
-          attachments: this.buildTicketAttachments(ticket, project, type, id)
+          'icon_url': 'http://imgur.com/UeMdM9p.png',
+          'attachments': this.buildTicketAttachments(ticket, project, type, id)
         };
 
         return this.postMessageToChannel(name, '', params);
@@ -118,16 +118,16 @@ export default class Jabbot extends Slackbots {
     const url = this.buildUrl(project, type, id);
     const title = this.formatTitle(type);
     const attachment = {
-      "fallback": `Jabwire: ${title} #${id} - ${url}`,
+      'fallback': `Jabwire: ${title} #${id} - ${url}`,
 
-      "color": "#658CB2",
-      "title": ticket.title,
-      "title_link": url,
+      'color': '#658CB2',
+      'title': ticket.title,
+      'title_link': url,
 
-      "author_name": `Jabwire: ${title} #${id}`,
-      "author_link": url,
+      'author_name': `Jabwire: ${title} #${id}`,
+      'author_link': url,
 
-      "mrkdwn_in": ["text"]
+      'mrkdwn_in': ['text']
     };
 
     switch (type) {
