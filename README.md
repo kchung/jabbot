@@ -1,6 +1,6 @@
 # Jabbot
 
-A [Jabwire](https://www.jabwire.com) integration with Slack based off of `slackbots`. When a Jabwire ticket (bug or sprint task) is posted in the integration channel
+A [Jabwire](https://www.jabwire.com) integration with Slack based off of `slackbots`. When a Jabwire ticket (bug or sprint task) is posted in the integration channel, the corressponding ticket with a brief summary will be shown.
 
 ## Install
 
