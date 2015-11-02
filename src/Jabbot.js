@@ -95,6 +95,7 @@ export default class Jabbot extends Slackbots {
       .then((ticket) => {
         const {name} = this.findChannelById(channel);        
         const params = {
+          icon_url: 'http://imgur.com/UeMdM9p.png',
           attachments: this.buildTicketAttachments(ticket, project, type, id)
         };
 
