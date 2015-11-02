@@ -118,15 +118,14 @@ export default class Jabbot extends Slackbots {
     const url = this.buildUrl(project, type, id);
     const title = this.formatTitle(type);
     const attachment = {
-      "fallback": `Jabwire ${title} #${id}: ${url}`,
+      "fallback": `Jabwire: ${title} #${id} - ${url}`,
 
       "color": "#658CB2",
       "title": ticket.title,
       "title_link": url,
 
-      "author_name": `Jabwire ${title} #${id}`,
+      "author_name": `Jabwire: ${title} #${id}`,
       "author_link": url,
-      "author_icon": "http://i.imgur.com/QPkhyAm.png",
 
       "mrkdwn_in": ["text"]
     };
