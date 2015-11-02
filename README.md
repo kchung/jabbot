@@ -15,7 +15,7 @@ To use this library, you'll need a Jabwire API token and a Slack token.
 ```js
 import Jabbot from 'jabbot';
 
-// Initialize the FullSlate wrapper
+// Initialize the Jabbot instance
 const bot = new Jabbot({
   name: 'Your_Jabbot_bot_name',
   token: 'Your_Slack_token',
