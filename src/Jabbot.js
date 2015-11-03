@@ -4,6 +4,25 @@ import request from 'superagent';
 export default class Jabbot extends Slackbots {
 
   /**
+   * @property {RegExp} Regex to detect if a Jabwire link is posted
+   */
+  mention = 'jabwire.com/projects/(.*?)/(bugs|sprint_tasks)/(\\d+)'
+
+  /**
+   * @property {String} Jabwire URL schema
+   */
+  jabwire = 'https://www.jabwire.com/projects/{project}/{type}/{id}'
+
+  /**
+   * @property {Object} Simple dictionary of raw types with human readable
+   *   values
+   */
+  types = {
+    'sprint_tasks': 'Sprint Task',
+    'bugs': 'Bug'
+  }
+
+  /**
    * @constructor
    * @param {Object} params Jabbot options
    * @param {String} params.name Jabbot name
@@ -275,23 +294,4 @@ export default class Jabbot extends Slackbots {
     return this.types[type];
   }
 
-};
-
-/**
- * @property {RegExp} Regex to detect if a Jabwire link is posted
- */
-Jabbot.prototype.mention = 'jabwire.com/projects/(.*?)/(bugs|sprint_tasks)/(\\d+)';
-
-/**
- * @property {String} Jabwire URL schema
- */
-Jabbot.prototype.jabwire = 'https://www.jabwire.com/projects/{project}/{type}/{id}';
-
-/**
- * @property {Object} Simple dictionary of raw types with human readable
- *   values
- */
-Jabbot.prototype.types = {
-  'sprint_tasks': 'Sprint Task',
-  'bugs': 'Bug'
-};
+}
