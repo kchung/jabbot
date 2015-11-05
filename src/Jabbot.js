@@ -36,10 +36,12 @@ export default class Jabbot extends Slackbots {
 
   /**
    * Run Jabbot, listen to events
+   * @return {Jabbot}
    */
   run() {
     this.on('start', this.onStart.bind(this));
     this.on('message', this.onMessage.bind(this));
+    return this;
   }
 
   /**
@@ -67,7 +69,10 @@ export default class Jabbot extends Slackbots {
       // Match multiple occurances
       message.match(global).forEach((partial) => {
         const [noop, project, type, id] = partial.match(local);
-        this.sendTicket(channel, project, type, id);
+        this.sendTicket(channel, project, type, id)
+          .then((message) => {
+            this.emit('send', message);
+          });
       });
     }
   }
@@ -118,7 +123,21 @@ export default class Jabbot extends Slackbots {
           'attachments': this.buildTicketAttachments(ticket, project, type, id)
         };
 
-        return this.postMessageToChannel(name, '', params);
+        return this.postMessageToChannel(name, '', params)
+          .then(() => {
+            return {
+              ticket: {
+                ...ticket,
+                type: type,
+                project: project
+              },
+              channel: name,
+              params: {
+                ...params,
+                attachments: JSON.parse(params.attachments)
+              }
+            }
+          });
       })
       .catch((error) => {
         console.error(error);
