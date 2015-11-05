@@ -50,7 +50,6 @@ export default class Jabbot extends Slackbots {
    */
   onStart() {
     this.user = this.findUserByName(this.name);
-    console.log('Jabbot ready');
   }
 
   /**
