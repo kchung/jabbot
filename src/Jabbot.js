@@ -1,5 +1,6 @@
 import Slackbots from 'slackbots';
 import request from 'superagent';
+import Promise from 'bluebird';
 
 export default class Jabbot extends Slackbots {
 
