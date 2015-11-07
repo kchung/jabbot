@@ -72,6 +72,9 @@ export default class Jabbot extends Slackbots {
         this.sendTicket(channel, project, type, id)
           .then((message) => {
             this.emit('send', message);
+          })
+          .catch((e) => {
+            this.emit('failed', message);
           });
       });
     }
@@ -138,9 +141,6 @@ export default class Jabbot extends Slackbots {
               }
             }
           });
-      })
-      .catch((error) => {
-        console.error(error);
       });
   }
 
