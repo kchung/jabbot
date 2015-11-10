@@ -209,14 +209,14 @@ export default class Jabbot extends Slackbots {
     const {priority, workflow, resolution, activities} = ticket;
 
     const external = activities.filter((activity) => {
-      return activity.external_ref !== null;
+      return activity.message_type === 'external_reference';
     });
 
     const message = [
       `_Priority_: ${priority}`,
       `_Workflow_: ${workflow}`,
       `_Resolution_: ${resolution}`,
-      `_External Activity_: ${external.length}`
+      `_Ticket References_: ${external.length}`
     ];
 
     return message.join(' | ');
