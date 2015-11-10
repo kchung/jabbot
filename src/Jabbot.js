@@ -213,9 +213,9 @@ export default class Jabbot extends Slackbots {
     });
 
     const message = [
-      `_Priority_: ${priority}`,
-      `_Workflow_: ${workflow}`,
-      `_Resolution_: ${resolution}`,
+      `_Priority_: ${capitalize(priority)}`,
+      `_Workflow_: ${capitalize(workflow)}`,
+      `_Resolution_: ${capitalize(resolution)}`,
       `_Ticket References_: ${external.length}`
     ];
 
@@ -232,7 +232,7 @@ export default class Jabbot extends Slackbots {
     const [noop, year, month, day] = updated_at.match(/(\d{4})-(\d{2})-(\d{2})/);
 
     const message = [
-      `_Workflow_: ${workflow}`,
+      `_Workflow_: ${capitalize(workflow)}`,
       `_Updated_: ${month}/${day}/${year}`,
       `_Estimate_: ${estimate}`
     ];
@@ -338,4 +338,14 @@ export default class Jabbot extends Slackbots {
     return this.types[type];
   }
 
+}
+
+/**
+ * Capitalize and format string
+ * @return {String} String that is capitalized and without underscore
+ */
+function capitalize(string = '') {
+  return string.split('_').map((partial) => {
+    return partial.charAt(0).toUpperCase() + partial.slice(1)
+  }).join(' ');
 }
