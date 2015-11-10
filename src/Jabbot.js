@@ -120,27 +120,47 @@ export default class Jabbot extends Slackbots {
   sendTicket(channel, project, type, id) {
     return this.getTicket(project, type, id)
       .then((ticket) => {
-        const {name} = this.findChannelById(channel);        
         const params = {
           'icon_url': 'http://imgur.com/UeMdM9p.png',
           'attachments': this.buildTicketAttachments(ticket, project, type, id)
         };
 
-        return this.postMessageToChannel(name, '', params)
-          .then(() => {
+        return this.postToMedium(channel, '', params)
+          .then((name) => {
             return {
               ticket: {
                 ...ticket,
                 type: type,
                 project: project
               },
-              channel: name,
+              room: name,
               params: {
                 ...params,
                 attachments: JSON.parse(params.attachments)
               }
             }
           });
+      });
+  }
+
+  /**
+   * Post message to an auto-detected medium (channel or group)
+   * @param {String} medium The channel or group name (usually starts with
+   *   a 'G' for group and 'C' for channel.
+   * @param {String} text Message to send
+   * @param {Object} params
+   * @return {Promise.<String, Error>} Returns the name of the medium when
+   *   sent.
+   */
+  postToMedium(medium, text, params) {
+    const {name} = this.findMediumById(medium);
+    const message = medium[0] === 'G'
+      ? this.postMessageToGroup
+      : this.postMessageToChannel
+
+    return message.apply(this, [name, text, params])
+      .then(() => {
+        return name;
       });
   }
 
@@ -227,7 +247,7 @@ export default class Jabbot extends Slackbots {
    */
   isValidEvent(event) {
     return this.isChatMessage(event)
-      && this.isChannelConversation(event)
+      && this.isValidConversation(event)
       && !this.isFromSelf(event)
       && this.isJabwireMention(event);
   }
@@ -242,12 +262,13 @@ export default class Jabbot extends Slackbots {
   }
 
   /**
-   * Check if event is a channel conversation
+   * Check if event is a valid conversation (either group or channel)
    * @param {Object} event
-   * @return {Boolean} If event is a channel conversation
+   * @return {Boolean} If event is a group or channel conversation
    */
-  isChannelConversation(event) {
-    return typeof event.channel === 'string' && event.channel[0] === 'C';
+  isValidConversation(event) {
+    return typeof event.channel === 'string'
+      && ['C', 'G'].indexOf(event.channel[0]) !== -1;
   }
 
   /**
@@ -280,13 +301,17 @@ export default class Jabbot extends Slackbots {
   }
 
   /**
-   * Find channel by id
+   * Find medium (channel or group) by id
    * @param {String} id
-   * @return {Object}
+   * @return {Object} Found medium
    */
-  findChannelById(id) {
-    return this.channels.filter((channel) => {
-      return channel.id === id;
+  findMediumById(id) {
+    const rooms = id[0] === 'G'
+      ? this.groups
+      : this.channels;
+
+    return rooms.filter((room) => {
+      return room.id === id;
     })[0];
   }
 
