@@ -39,6 +39,14 @@ export default class Jabbot extends Slackbots {
    */
   constructor(params = {}) {
     super(params);
+
+    if (!params.api) {
+      throw new Error('Jabwire API token required');
+    }
+    else if (!params.project) {
+      throw new Error('Jabwire project id required');
+    }
+
     this.api = params.api;
     this.project = params.project;
   }
