@@ -5,9 +5,15 @@ import Promise from 'bluebird';
 export default class Jabbot extends Slackbots {
 
   /**
-   * @property {RegExp} Regex to detect if a Jabwire link is posted
+   * @property {String} Regex to detect if a Jabwire link is posted
    */
   mention = 'jabwire.com/projects/(.*?)/(bugs|sprint_tasks)/(\\d+)'
+
+  /**
+   * @property {String} Regex to detect if a Jabwire short hand is posted
+   *   like "Bug #1234" and "Sprint Task #12312"
+   */
+  shorthand = '(bug|sprint(?:\\s+)?task|st)(?:\\s+)?(?:#)?(\\d+)';
 
   /**
    * @property {String} Jabwire URL schema
@@ -29,10 +35,12 @@ export default class Jabbot extends Slackbots {
    * @param {String} params.name Jabbot name
    * @param {String} params.token Slack token
    * @param {String} params.api Jabwire API key
+   * @param {String} params.api Jabwire project id
    */
   constructor(params = {}) {
     super(params);
     this.api = params.api;
+    this.project = params.project;
   }
 
   /**
@@ -67,8 +75,8 @@ export default class Jabbot extends Slackbots {
       const local = new RegExp(this.mention);
 
       // Match multiple occurances
-      message.match(global).forEach((partial) => {
-        const [noop, project, type, id] = partial.match(local);
+      this.getMatches(message).forEach((partial) => {
+        const {project, type, id} = this.getTicketMatches(partial);
         this.sendTicket(channel, project, type, id)
           .then((message) => {
             this.emit('send', message);
@@ -78,6 +86,65 @@ export default class Jabbot extends Slackbots {
           });
       });
     }
+  }
+
+  /**
+   * Attempt to match message with either a url mention or a text mention
+   * @param {String} message
+   * @return {Array} Any possible matches
+   */
+  getMatches(message) {
+    return message.match(new RegExp(this.mention, 'ig'))
+      || message.match(new RegExp(this.shorthand, 'ig'));
+  }
+
+  /**
+   * Attempt Jabwire ticket data out of the message, it can either be a
+   * url or from a string (e.g Bug 1234)
+   * @param {String} message
+   * @return {Object}
+   */
+  getTicketMatches(message) {
+    return this.getMatchesFromUrl(message)
+      || this.getMatchesFromString(message);
+  }
+
+  /**
+   * Attempt to pull the ticket info as a URL from message
+   * @param {String} [message = '']
+   * @return {Object|Undefined}
+   */
+  getMatchesFromUrl(message = '') {
+    const [match, project, type, id] = message.match(new RegExp(this.mention)) || [];
+
+    if (match) {
+      return {
+        project,
+        type,
+        id
+      }
+    }
+
+    return match;
+  }
+
+  /**
+   * Attempt to pull the ticket info as a string from message
+   * @param {String} [message = '']
+   * @return {Object|Null}
+   */
+  getMatchesFromString(message = '') {
+    const [match, type, id] = message.match(new RegExp(this.shorthand, 'i')) || [];
+
+    if (match) {
+      return {
+        project: this.project,
+        type: /bug/i.test(type) ? 'bugs' : 'sprint_tasks',
+        id: id
+      }
+    }
+
+    return match;
   }
 
   /**
@@ -111,10 +178,10 @@ export default class Jabbot extends Slackbots {
 
   /**
    * Send ticket to channel supplied channel
-   * @param {String} channel
-   * @param {String} project
-   * @param {String} type
-   * @param {String} id
+   * @param {String} channel Slack medium (group or channel)
+   * @param {String} project Jabwire project id
+   * @param {String} type Ticket type (`bugs` or `sprint_tasks`)
+   * @param {String} id Ticket id
    * @return {Promise}
    */
   sendTicket(channel, project, type, id) {
@@ -286,7 +353,8 @@ export default class Jabbot extends Slackbots {
    * @return {Boolean} If event is probably a Jabwire message
    */
   isJabwireMention(event) {
-    return event.text.toLowerCase().match(this.mention);
+    return event.text.toLowerCase().match(new RegExp(this.mention))
+      || event.text.match(new RegExp(this.shorthand, 'i'));
   }
 
   /**
