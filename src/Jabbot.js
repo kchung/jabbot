@@ -13,7 +13,7 @@ export default class Jabbot extends Slackbots {
    * @property {String} Regex to detect if a Jabwire short hand is posted
    *   like "Bug #1234" and "Sprint Task #12312"
    */
-  shorthand = '(bug|sprint(?:\\s+)?task|task)(?:\\s+)?(?:#)?(\\d+)';
+  shorthand = '\\b(bug|sprint(?:\\s+)?task|task)(?:\\s+)?(?:#)?(\\d+)\\b';
 
   /**
    * @property {String} Jabwire URL schema
