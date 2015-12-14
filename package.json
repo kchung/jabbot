@@ -36,6 +36,7 @@
   "main": "lib/Jabbot",
   "scripts": {
     "build": "./node_modules/.bin/babel --preset es2015 src/Jabbot.js --out-file lib/Jabbot.js"
+    "prepublish": "./node_modules/.bin/babel --preset es2015 src/Jabbot.js --out-file lib/Jabbot.js"
   },
   "license": "MIT"
 }
