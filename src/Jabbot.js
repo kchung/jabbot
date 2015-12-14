@@ -1,8 +1,8 @@
-import Slackbots from 'slackbots';
+import Slack from 'slack-client';
 import request from 'superagent';
 import Promise from 'bluebird';
 
-export default class Jabbot extends Slackbots {
+export default class Jabbot extends Slack {
 
   /**
    * @property {String} Regex to detect if a Jabwire link is posted
@@ -38,7 +38,8 @@ export default class Jabbot extends Slackbots {
    * @param {String} params.api Jabwire project id
    */
   constructor(params = {}) {
-    super(params);
+    // Default `autoReconnect` and `autoMark` to `true`
+    super(params.token, true, true);
 
     if (!params.api) {
       throw new Error('Jabwire API token required');
@@ -49,32 +50,19 @@ export default class Jabbot extends Slackbots {
 
     this.api = params.api;
     this.project = params.project;
-  }
 
-  /**
-   * Run Jabbot, listen to events
-   * @return {Jabbot}
-   */
-  run() {
-    this.on('start', this.onStart.bind(this));
-    this.on('message', this.onMessage.bind(this));
-    return this;
-  }
+    // Listen to all incoming messages
+    this.on('message', this.checkMessage.bind(this));
 
-  /**
-   * Start event handler
-   * @param {Object} event
-   */
-  onStart() {
-    this.user = this.findUserByName(this.name);
+    this.login();
   }
 
   /**
    * Message event handler
    * @param {Object} event
    */
-  onMessage(event) {
-    if (this.isValidEvent(event)) {
+  checkMessage(event) {
+    if (this.isValidMessage(event)) {
       const {text, channel} = event;
       const message = text.toLowerCase();
 
@@ -200,15 +188,15 @@ export default class Jabbot extends Slackbots {
           'attachments': this.buildTicketAttachments(ticket, project, type, id)
         };
 
-        return this.postToMedium(channel, '', params)
-          .then((name) => {
+        return this.postToChannel(channel, '', params)
+          .then((response) => {
             return {
+              response: response,
               ticket: {
                 ...ticket,
                 type: type,
                 project: project
               },
-              room: name,
               params: {
                 ...params,
                 attachments: JSON.parse(params.attachments)
@@ -219,24 +207,29 @@ export default class Jabbot extends Slackbots {
   }
 
   /**
-   * Post message to an auto-detected medium (channel or group)
-   * @param {String} medium The channel or group name (usually starts with
-   *   a 'G' for group and 'C' for channel.
+   * Post message to the channel
+   * @param {String} channel The channel, group, or DM
    * @param {String} text Message to send
-   * @param {Object} params
-   * @return {Promise.<String, Error>} Returns the name of the medium when
-   *   sent.
+   * @param {Object} params Additional message parameters
+   * @return {Promise.<String, Error>} Returns API response
    */
-  postToMedium(medium, text, params) {
-    const {name} = this.findMediumById(medium);
-    const message = medium[0] === 'G'
-      ? this.postMessageToGroup
-      : this.postMessageToChannel
+  postToChannel(channel, text, params = {}) {
+    return new Promise((resolve, reject) => {
+      const message = {
+        username: this.name,
+        channel: channel,
+        text: text,
+        ...params
+      };
 
-    return message.apply(this, [name, text, params])
-      .then(() => {
-        return name;
+      this._apiCall('chat.postMessage', message, (response) => {
+        if (response.ok) {
+          resolve(response);
+        } else {
+          reject(response);
+        }
       });
+    });
   }
 
   /**
@@ -320,30 +313,9 @@ export default class Jabbot extends Slackbots {
    * @param {Object} event
    * @return {Boolean} Event is valid to respond to
    */
-  isValidEvent(event) {
-    return this.isChatMessage(event)
-      && this.isValidConversation(event)
-      && !this.isFromSelf(event)
+  isValidMessage(event) {
+    return !this.isFromSelf(event)
       && this.isJabwireMention(event);
-  }
-
-  /**
-   * Check if event is a valid chat message
-   * @param {Object} event
-   * @return {Boolean} If event is a valid message
-   */
-  isChatMessage(event) {
-    return event.type === 'message' && !!event.text;
-  }
-
-  /**
-   * Check if event is a valid conversation (either group or channel)
-   * @param {Object} event
-   * @return {Boolean} If event is a group or channel conversation
-   */
-  isValidConversation(event) {
-    return typeof event.channel === 'string'
-      && ['C', 'G'].indexOf(event.channel[0]) !== -1;
   }
 
   /**
@@ -352,7 +324,7 @@ export default class Jabbot extends Slackbots {
    * @return {Boolean} If event is posted by itself
    */
   isFromSelf(event) {
-    return event.user === this.user.id;
+    return event.user === this.self.id;
   }
 
   /**
@@ -366,43 +338,17 @@ export default class Jabbot extends Slackbots {
   }
 
   /**
-   * Find user by name
-   * @param {String} name
-   * @return {Object}
-   */
-  findUserByName(name) {
-    return this.users.filter((user) => {
-      return user.name === name;
-    })[0];
-  }
-
-  /**
-   * Find medium (channel or group) by id
-   * @param {String} id
-   * @return {Object} Found medium
-   */
-  findMediumById(id) {
-    const rooms = id[0] === 'G'
-      ? this.groups
-      : this.channels;
-
-    return rooms.filter((room) => {
-      return room.id === id;
-    })[0];
-  }
-
-  /**
-   * 
-   * @param {String} project
-   * @param {String} type
-   * @param {String} id
-   * @return {String}
+   * Build Jabwire URL
+   * @param {String} project Jabwire project
+   * @param {String} type Jabwire ticket type (sprint_task or bug)
+   * @param {String} id Jabwire ticket id
+   * @return {String} Build Jabwire URL
    */
   buildUrl(project, type, id) {
     return this.jabwire
       .replace('{project}', project)
       .replace('{type}', type)
-      .replace('{id}', id);    
+      .replace('{id}', id);
   }
 
   /**
