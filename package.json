@@ -1,6 +1,6 @@
 {
   "name": "jabbot",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A Jabwire integration with Slack",
   "keywords": [
     "slack",
@@ -35,8 +35,7 @@
   },
   "main": "lib/Jabbot",
   "scripts": {
-    "build": "./node_modules/.bin/babel --preset es2015 src/Jabbot.js --out-file lib/Jabbot.js",
-    "prepublish": "./node_modules/.bin/babel --preset es2015 src/Jabbot.js --out-file lib/Jabbot.js"
-  },
+    "build": "./node_modules/.bin/babel --preset es2015 src/Jabbot.js --out-file lib/Jabbot.js"
+   },
   "license": "MIT"
 }
