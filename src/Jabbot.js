@@ -333,8 +333,9 @@ export default class Jabbot extends Slack {
    * @return {Boolean} If event is probably a Jabwire message
    */
   isJabwireMention(event) {
-    return event.text.toLowerCase().match(new RegExp(this.mention))
-      || event.text.match(new RegExp(this.shorthand, 'i'));
+    const text = event.text || '';
+    return text.toLowerCase().match(new RegExp(this.mention))
+      || text.match(new RegExp(this.shorthand, 'i'));
   }
 
   /**
